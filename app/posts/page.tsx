@@ -1,14 +1,15 @@
 import Link from "next/link";
+import PostCard from "@/components/post-card";
 import { apiGet } from "@/lib/api";
-import type { ApiCollection, ApiInfo, Category } from "@/lib/types";
+import type { ApiCollection, Category, Paginated, Post } from "@/lib/types";
 
-// Server Component: runs on the Next.js server, so it can await the Laravel API directly
 export default async function HomePage() {
-  // Both requests start at the same time instead of one after the other
-  const [info, categories] = await Promise.all([
-    apiGet<ApiInfo>(""),
-    apiGet<ApiCollection<Category>>("/categories"),
+  const [posts, categories] = await Promise.all([
+    apiGet<Paginated<Post>>("/posts"),
+    apiGet<ApiCollection<Category>>("/categories", { revalidate: 300 }),
   ]);
+
+  const latestPosts = posts.data.slice(0, 3);
 
   return (
     <>
@@ -17,9 +18,17 @@ export default async function HomePage() {
         <p className="text-lg text-gray-600">Tutorials and notes on Laravel, PHP and web development.</p>
       </section>
 
-      <div className="mb-10 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-        Connected to <strong>{info.name}</strong> ({info.version})
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Latest posts</h2>
+
+      <div className="grid gap-6 md:grid-cols-3 mb-6">
+        {latestPosts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
       </div>
+
+      <Link href="/posts" className="inline-block mb-12 text-blue-600 font-medium hover:underline">
+        View all posts &rarr;
+      </Link>
 
       <h2 className="text-2xl font-semibold text-gray-900 mb-4">Categories</h2>
 

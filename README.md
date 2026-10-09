@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Laravel Blog — Next.js Frontend
 
-## Getting Started
+The frontend for the [Laravel Blog](https://github.com/<your-github-username>/laravel-blog) project.
+Built with Next.js (App Router), TypeScript and Tailwind CSS. All data comes from the Laravel REST API (`/api/v1`).
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Home page with the latest posts and categories
+- Posts list with search, category filter and pagination
+- Single post pages with image, tags and approved comments
+- Log in with a Laravel Sanctum token stored in an **httpOnly cookie** (never readable by browser JavaScript)
+- Protected dashboard: the user's own posts
+- Create, edit and delete posts with image upload and tags, using Laravel's validation and permissions
+- Comment form (comments wait for admin approval)
+- Loading skeletons, a custom 404 page and an error page with retry
+
+## How it works
+
+```
+Browser ──► Next.js (Server Components + Server Actions) ──► Laravel API ──► MySQL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Pages are **Server Components**: they call the Laravel API on the server, so the API URL and the token never reach the browser.
+- Forms use **Server Actions**. Laravel's 422 validation errors are shown under each field.
+- Public data is cached with `revalidate`. Responses made with a user's token are never cached.
+- The visitor's IP is passed to Laravel in `X-Client-IP`, signed with a shared secret, so Laravel's rate limits work per visitor.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Requirements
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 20.9+
+- The Laravel Blog API running (see its README)
 
-## Learn More
+## Setup
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+git clone https://github.com/<your-github-username>/blog-frontend.git
+cd blog-frontend
+npm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create `.env.local`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+LARAVEL_API_URL=http://blog.test/api/v1
+FRONTEND_SECRET=<the same value as FRONTEND_SECRET in the Laravel .env>
+```
 
-## Deploy on Vercel
+Run it:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev          # development, http://localhost:3000
+npm run build        # production build
+npm run start        # run the production build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Demo login: `admin@example.com` / `password` (from the Laravel seeder).
+
+## Project structure
+
+| Path | What it is |
+|------|------------|
+| `app/` | Pages and layouts (folder = URL) |
+| `app/actions/` | Server Actions: login, logout, posts, comments |
+| `components/` | Post card, forms, pagination, nav link |
+| `lib/api.ts` | The only place that talks to the Laravel API |
+| `lib/session.ts` | The httpOnly token cookie |
+| `lib/auth.ts` | Current user, protected pages |
+| `lib/types.ts` | TypeScript types matching the Laravel API Resources |
